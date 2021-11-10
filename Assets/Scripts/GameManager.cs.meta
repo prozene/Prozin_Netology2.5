@@ -1,0 +1,20 @@
+fileFormatVersion: 2
+guid: b527b62b42892184a8cd3cd957bd4aac
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - _focusMaterial: {instanceID: 0}
+  - _enemyMaterial: {instanceID: 0}
+  - _whiteCell: {fileID: 5043647206865755134, guid: 3db6a69e3c315e447a92b04bc494f163,
+      type: 3}
+  - _blackCell: {fileID: 1161857889262471563, guid: 2877940aa6fea694d9eb4112cb45632f,
+      type: 3}
+  - _whiteChip: {instanceID: 0}
+  - _blackChip: {instanceID: 0}
+  - _text: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
