@@ -8,17 +8,17 @@ namespace Checkers
     public abstract class BaseClickComponent : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
     {
 
-        [SerializeField]
-        protected Material hoverMaterial;
-        [SerializeField] 
-        protected Material selectMaterial;
+        [SerializeField] protected Material hoverMaterial;
+        [SerializeField] protected Material selectMaterial;
+        [SerializeField] protected Material eatableMaterial;
+        [SerializeField] protected LayerMask chipLayer;
 
         public bool IsSelected { get; protected set; }
 
         //Меш игрового объекта
         private MeshRenderer _mesh;
         //Список материалов на меше объекта
-        private Material[] _meshMaterials = new Material[3];
+        private Material[] _meshMaterials = new Material[4];
 
         [Tooltip("Цветовая сторона игрового объекта"), SerializeField]
         private ColorType _color;
@@ -40,9 +40,9 @@ namespace Checkers
         /// </summary>
         public void AddAdditionalMaterial(Material material, int index = 1)
         {
-            if (index < 1 || index > 2)
+            if (index < 1 || index > 3)
             {
-                Debug.LogError("Попытка добавить лишний материал. Индекс может быть равен только 1 или 2");
+                Debug.LogError("Попытка добавить лишний материал. Индекс может быть равен только 1 - 3");
                 return;
             }
             _meshMaterials[index] = material;
@@ -54,9 +54,9 @@ namespace Checkers
         /// </summary>
         public void RemoveAdditionalMaterial(int index = 1)
         {
-            if (index < 1 || index > 2)
+            if (index < 1 || index > 3)
             {
-                Debug.LogError("Попытка удалить несуществующий материал. Индекс может быть равен только 1 или 2");
+                Debug.LogError("Попытка удалить несуществующий материал. Индекс может быть равен только 1 - 3");
                 return;
             }
             _meshMaterials[index] = null;

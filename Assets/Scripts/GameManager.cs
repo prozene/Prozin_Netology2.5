@@ -4,11 +4,12 @@ using UnityEngine.EventSystems;
 
 public class GameManager : MonoBehaviour
 {
+    [SerializeField] private ColorType _currentTurn;
+    [SerializeField] private EventSystem _eventSystem;
+
     private ChipComponent _selectedChip;
     private CellComponent[] _cells;
     private ChipComponent[] _chips;
-    [SerializeField] private ColorType _currentTurn;
-    [SerializeField] private EventSystem _eventSystem;
 
     private void Awake()
     {
@@ -21,7 +22,7 @@ public class GameManager : MonoBehaviour
             foreach (var chip in _chips)
             {
                 chip.OnClickEventHandler += SelectComponent;
-                chip.OnMoveFinished += SwitchEventSystemStatus;
+                chip.OnChipMove += SwitchEventSystemStatus;
             }
         }
         
@@ -34,13 +35,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void SwitchEventSystemStatus() // забираем управление у игрока
-    {
-        _eventSystem.enabled = !_eventSystem.enabled;
-    }
-
-
-    public void SelectComponent(BaseClickComponent component) // меняем выделенные фишки
+    private void SelectComponent(BaseClickComponent component) // меняем выделенные фишки
     {
         if (component is ChipComponent chip && chip.GetColor == _currentTurn)
         {
@@ -54,7 +49,7 @@ public class GameManager : MonoBehaviour
                 chip.Select();
                 if (!chip.IsSelected)
                 {
-                    _selectedChip = null; 
+                    _selectedChip = null;
                 }
             }
             else
@@ -64,7 +59,7 @@ public class GameManager : MonoBehaviour
                 chip.Select();
             }
         }
-        else if (component is CellComponent cell && cell.IsEmptyToMove && _selectedChip != null)
+        else if(component is CellComponent cell && cell.IsEmptyToMove && _selectedChip != null)
         {
             SwitchEventSystemStatus();
             _selectedChip.MoveOnNewCell(cell);
@@ -72,8 +67,14 @@ public class GameManager : MonoBehaviour
             NextTurn();
         }
     }
+
     private void NextTurn()
     {
         _currentTurn = _currentTurn == ColorType.Black ? ColorType.White : ColorType.Black;
+    }
+
+    private void SwitchEventSystemStatus()
+    {
+        _eventSystem.enabled = !_eventSystem.enabled;
     }
 }

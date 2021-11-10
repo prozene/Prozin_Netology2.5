@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 1838302469284887781}
   - component: {fileID: 1838302469284887780}
   - component: {fileID: 1838302469284887776}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ChipBlack
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -108,5 +108,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hoverMaterial: {fileID: 2100000, guid: ac1c30f64657c35408f23468c4416f47, type: 2}
-  selectMaterial: {fileID: 2100000, guid: f65c3454a9c5e904b901654cb7f10530, type: 2}
+  selectMaterial: {fileID: 2100000, guid: ac1c30f64657c35408f23468c4416f47, type: 2}
+  eatableMaterial: {fileID: 2100000, guid: a43d43ca33faba84a902034fd61b768f, type: 2}
   _color: 1
+  moveTime: 1
+  moveSpeed: 5
+  moveHeight: 1

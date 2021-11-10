@@ -6,9 +6,9 @@ namespace Checkers
 {
     public class CellComponent : BaseClickComponent
     {
-        public bool IsEmpty => Pair == null; // проверка на то что клетка пустая чтоб не показывать там подсветку
-
+        public bool IsEmpty => Pair == null;
         public bool IsEmptyToMove => !_isSelectable && IsEmpty;
+        
         private bool _isSelectable = true;
 
         protected override void Start()
@@ -23,7 +23,6 @@ namespace Checkers
 
             OnFocusEventHandler += ChangeMaterialOnHover;
         }
-
 
         private void AddNeighbor(NeighborType neighborType, Vector3 direction) // собираем список соседей для клеток
         {
@@ -70,16 +69,7 @@ namespace Checkers
                 RemoveAdditionalMaterial(2);
             }
         }
-
-        /// <summary>
-        /// Конфигурирование связей клеток
-        /// </summary>
-		public void Configuration(Dictionary<NeighborType, CellComponent> neighbors)
-		{
-            if (_neighbors != null) return;
-            _neighbors = neighbors;
-		}
-	}
+    }
 
     /// <summary>
     /// Тип соседа клетки

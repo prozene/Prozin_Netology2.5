@@ -1,22 +1,34 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
-
+using UnityEngine.UIElements;
 
 namespace Checkers
 {
     public class ChipComponent : BaseClickComponent
     {
-        [SerializeField] private float moveTime = 1;
+        [SerializeField] private float moveTime = 2;
         [SerializeField] private float moveSpeed = 1;
         [SerializeField] private float moveHeight = 1;
 
-        public event Action OnMoveFinished;
+        public event Action OnChipMove;
+
+        private bool _isColorNotChangedToEatable = true;
+        
         protected override void Start()
         {
             base.Start();
+            PairChipWithCell();
+            OnFocusEventHandler += ChangeMaterialOnHover;
+        }
+
+        private void PairChipWithCell()
+        {
+            if (Pair != null)
+            {
+                Pair.Pair = null;
+            }
             if (Physics.Raycast ( transform.position, Vector3.down, out var hit, 5))
             {
                 var cell = hit.collider.gameObject.GetComponent<CellComponent>(); // делаем пары для шашек и клеток
@@ -26,10 +38,8 @@ namespace Checkers
                     cell.Pair = this;
                 }
             }
-
-            OnFocusEventHandler += ChangeMaterialOnHover;
         }
-
+        
         public override void OnPointerEnter(PointerEventData eventData)
         {
             CallBackEvent((CellComponent)Pair, true);
@@ -56,38 +66,30 @@ namespace Checkers
             }
         }
 
-        private void PairChipWithCell()
-        {
-            if(Pair != null)
-            {
-                Pair.Pair = null;
-            }
-            if (Physics.Raycast ( transform.position, Vector3.down, out var hit,5))
-            {
-                var cell = hit.collider.gameObject.GetComponent<CellComponent>(); // делаем пары для шашек и клеток
-                if (cell != null)
-                {
-                    Pair = cell;
-                    cell.Pair = this;
-                }
-            }
-        }
-
         public void MoveOnNewCell(CellComponent cell)
         {
             Select();
             var newPosition = cell.transform.position;
-            StartCoroutine(MoveChipOnNewCell(newPosition)); // корутина движения
-
+            StartCoroutine(MoveChipOnNewCell(newPosition));
         }
 
-        private IEnumerator MoveChipOnNewCell (Vector3 newPosition)
+        private IEnumerator MoveChipOnNewCell(Vector3 newPosition)
         {
-            var startPos = transform.position;
             var lerpTime = 0f;
+            var startPos = transform.position;
+            newPosition = new Vector3(newPosition.x, startPos.y + moveHeight, newPosition.z);
+            while (lerpTime < moveTime / 2)
+            {
+                transform.position = Vector3.Lerp(startPos, newPosition, lerpTime / moveTime);
+                lerpTime += moveSpeed * Time.deltaTime;
+                yield return null;
+            }
 
-            newPosition = newPosition + new Vector3(0, startPos.y, 0);
-            while(lerpTime < moveTime)
+            TryEatEnemyChip();
+            lerpTime = 0f;
+            newPosition = new Vector3(newPosition.x, startPos.y, newPosition.z);
+            startPos = transform.position;
+            while (lerpTime < moveTime / 2)
             {
                 transform.position = Vector3.Lerp(startPos, newPosition, lerpTime / moveTime);
                 lerpTime += moveSpeed * Time.deltaTime;
@@ -96,37 +98,122 @@ namespace Checkers
 
             transform.position = newPosition;
             PairChipWithCell();
-            OnMoveFinished?.Invoke(); // проверяем чтоб евент не был null и вызываем его
+            OnChipMove?.Invoke();
         }
 
-        public void ChangeMaterialOnEnable()
+        private bool TryEatEnemyChip()
         {
+            if(Physics.Raycast(transform.position, Vector3.down, out var hitChip, 5))
+            {
+                var chip = hitChip.collider.GetComponent<ChipComponent>();
+                if (chip != null)
+                {
+                    chip.DestroyChip();
+                    return true;
+                }
+            }
 
+            return false;
         }
+
+        public void DestroyChip()
+        {
+            Pair.Pair = null;
+            Pair = null;
+            gameObject.SetActive(false);
+        }
+
+        public void ChangeMaterialOnEatable()
+        {
+            if (_isColorNotChangedToEatable)
+            {
+                _isColorNotChangedToEatable = false;
+                AddAdditionalMaterial(eatableMaterial, 3);
+            }
+            else
+            {
+                _isColorNotChangedToEatable = true;
+                RemoveAdditionalMaterial(3);
+            }
+        }
+
+        // shit, it smells
         private void ShowAvailableNeighboursToWalk()
         {
             if (Pair is CellComponent cell)
             {
                 if (GetColor == ColorType.White)
                 {
-                    if (cell.TryGetNeighbor(NeighborType.TopLeft, out var leftCell) && leftCell.IsEmpty)
+                    if (cell.TryGetNeighbor(NeighborType.TopLeft, out var leftCell))
                     {
-                        leftCell.ChangeMaterialIfSelectable();
+                        if (leftCell.IsEmpty)
+                        {
+                            leftCell.ChangeMaterialIfSelectable();
+                        }
+                        else
+                        {
+                            if (leftCell.Pair.GetColor != GetColor && 
+                                leftCell.TryGetNeighbor(NeighborType.TopLeft, out var leftOverEnemy) && 
+                                leftOverEnemy.IsEmpty)
+                            {
+                                (leftCell.Pair as ChipComponent)?.ChangeMaterialOnEatable();
+                                leftOverEnemy.ChangeMaterialIfSelectable();
+                            }
+                        }
                     }
-                    if (cell.TryGetNeighbor(NeighborType.TopRight, out var rightCell) && rightCell.IsEmpty)
+                    if (cell.TryGetNeighbor(NeighborType.TopRight, out var rightCell))
                     {
-                        rightCell.ChangeMaterialIfSelectable();
+                        if (rightCell.IsEmpty)
+                        {
+                            rightCell.ChangeMaterialIfSelectable();
+                        }
+                        else
+                        {
+                            if (rightCell.Pair.GetColor != GetColor && 
+                                rightCell.TryGetNeighbor(NeighborType.TopRight, out var rightOverEnemy) && 
+                                rightOverEnemy.IsEmpty)
+                            {
+                                (rightCell.Pair as ChipComponent)?.ChangeMaterialOnEatable();
+                                rightOverEnemy.ChangeMaterialIfSelectable();
+                            }
+                        }
                     }
                 }
                 else
                 {
-                    if (cell.TryGetNeighbor(NeighborType.BottomLeft, out var leftCell) && leftCell.IsEmpty)
+                    if (cell.TryGetNeighbor(NeighborType.BottomLeft, out var leftCell))
                     {
-                        leftCell.ChangeMaterialIfSelectable();
+                        if (leftCell.IsEmpty)
+                        {
+                            leftCell.ChangeMaterialIfSelectable();
+                        }
+                        else
+                        {
+                            if (leftCell.Pair.GetColor != GetColor && 
+                                leftCell.TryGetNeighbor(NeighborType.BottomLeft, out var leftOverEnemy) && 
+                                leftOverEnemy.IsEmpty)
+                            {
+                                (leftCell.Pair as ChipComponent)?.ChangeMaterialOnEatable();
+                                leftOverEnemy.ChangeMaterialIfSelectable();
+                            }
+                        }
                     }
-                    if (cell.TryGetNeighbor(NeighborType.BottomRight, out var rightCell) && rightCell.IsEmpty)
+                    if (cell.TryGetNeighbor(NeighborType.BottomRight, out var rightCell))
                     {
-                        rightCell.ChangeMaterialIfSelectable();
+                        if (rightCell.IsEmpty)
+                        {
+                            rightCell.ChangeMaterialIfSelectable();
+                        }
+                        else
+                        {
+                            if (rightCell.Pair.GetColor != GetColor && 
+                                rightCell.TryGetNeighbor(NeighborType.BottomRight, out var rightOverEnemy) && 
+                                rightOverEnemy.IsEmpty)
+                            {
+                                (rightCell.Pair as ChipComponent)?.ChangeMaterialOnEatable();
+                                rightOverEnemy.ChangeMaterialIfSelectable();
+                            }
+                        }
                     }
                 }
             }
